@@ -5,17 +5,6 @@ Installation is pretty straightforward. You need to install requirements as you 
 pip install -r requirements.txt
 ```
 
-
-# Install application in Docker
-
-You can follow [FastAPI guide](https://fastapi.tiangolo.com/deployment/docker/) to deploy application in docker container.
-
-To summarize the installation, you have to type the two following command lines :
-```
-docker build -t projet_moore .
-docker run -d --name projet_moore -p 80:80 projet_moore
-```
-
 The application will be then available at defined port.
 
 # Launch application
