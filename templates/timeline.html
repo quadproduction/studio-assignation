@@ -1,10 +1,12 @@
+{% set current_page = "timeline" %}
+{% set restrict_height = True %}
 {% extends "base.html" %}
 
 {% block content %}
 <div id="calendar" class="sm:rounded-lg component-shadow">
-    <div id="heading" class="bg-gray-800 p-4 h-fit">
+    <div id="heading" class="bg-gray-800 px-6 py-4 h-fit">
         <h1>Calendrier</h1>
-        <div id="calendar-header">
+        <div id="header">
             <h3 class="mt-1 text-sm font-normal text-blue-200">Gestion de l'occupation des postes du studio.</h3>
             <div id="calendar-buttons">
                 <button title="Center sur aujourd'hui" type="button" onclick="scrollToTodayColumn()" class="cursor-pointer px-2 text-xs font-medium text-center text-black rounded-lg focus:ring-4 focus:outline-none bg-yellow-600 hover:bg-yellow-500 focus:ring-yellow-700 inline-flex items-center me-2"><svg class="w-5 h-5 text-black" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 24 24"><path d="M7.833 2c-.507 0-.98.216-1.318.576A1.92 1.92 0 0 0 6 3.89V21a1 1 0 0 0 1.625.78L12 18.28l4.375 3.5A1 1 0 0 0 18 21V3.889c0-.481-.178-.954-.515-1.313A1.808 1.808 0 0 0 16.167 2H7.833Z"/></svg></button>
@@ -64,10 +66,10 @@
     const commonSelectOptions = new Set(["---", "TT", "ABS"])
 
     function getElapsedDaysSinceStartOfYear() {
-      const today = new Date()
-      today.setHours(0, 0, 0, 0) // Remove hours, minutes, seconds, milliseconds
-      const firstDayOfYear = new Date(today.getFullYear(), 0, 1) // January 1st at midnight
-      return (today - firstDayOfYear) / 86400000 // Directly in days
+        const today = new Date()
+        const diff = Date.UTC(today.getFullYear(), today.getMonth(), today.getDate())
+            - Date.UTC(today.getFullYear(), 0, 1)
+        return diff / 86400000 // Directly in days
     }
 
     function scrollToTodayColumn() {

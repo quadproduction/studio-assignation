@@ -202,6 +202,12 @@ async def timeline(request: Request):
     return TEMPLATES.TemplateResponse("timeline.html", data)
 
 
+@app.get("/about/")
+async def timeline(request: Request):
+    data = {"app_name": APP_NAME, "request": request}
+    return TEMPLATES.TemplateResponse("about.html", data)
+
+
 @app.post("/assignation-update/")
 async def assignation_update(request: Request):
     body = await request.json()
@@ -216,6 +222,6 @@ app.add_middleware(SessionMiddleware, secret_key="StudioAssignation")
 
 
 if __name__ == "__main__":
-    config = uvicorn.Config("app:app", port=5000, reload=True, log_level="debug")
+    config = uvicorn.Config("app:app", host="0.0.0.0", port=5000, reload=True, log_level="debug")
     server = uvicorn.Server(config)
     server.run()
