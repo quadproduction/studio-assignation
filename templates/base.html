@@ -4,6 +4,12 @@
     <meta charset="UTF-8" />
     <title>{{ app_name }}</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/png" href="/static/favicon-96x96.png" sizes="96x96" />
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg" />
+    <link rel="shortcut icon" href="/static/favicon.ico" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/static/apple-touch-icon.png" />
+    <meta name="apple-mobile-web-app-title" content="S. Assign." />
+    <link rel="manifest" href="/static/site.webmanifest" />
     <link href="https://cdn.jsdelivr.net/npm/flowbite@3.1.2/dist/flowbite.min.css" rel="stylesheet" />
     <link href="{{ url_for('static', path='/style.css') }}" rel="stylesheet" type="text/css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -15,7 +21,7 @@
         <nav class="bg-gray-800 border-gray-200 px-4 lg:px-6 py-2.5 component-shadow">
             <div class="flex flex-wrap justify-between items-center mx-auto max-w-screen-xl">
                 <a href="/" class="flex items-center">
-                    <img src="https://flowbite.com/docs/images/logo.svg" class="mr-3 h-6 sm:h-9" alt="Studio Assignation Logo" />
+                    <img src="/static/logo.png" class="mr-3 h-6 sm:h-9" alt="Studio Assignation Logo" />
                     <span class="self-center text-xl font-semibold whitespace-nowrap dark:text-white">{{ app_name }}</span>
                 </a>
                 <div class="flex items-center lg:hidden lg:order-2">
