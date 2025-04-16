@@ -160,7 +160,15 @@ async def authenticate_user(request: Request,
 async def get_projects_assignation_data(_: Request):
     table_header_rows = None
     projects_data = {}
-    for sheet in app.runtime_data["spreadsheet"].worksheets():
+
+    worksheets_names = app.runtime_data["spreadsheet"].worksheets()
+    worksheets_names.sort()
+
+    if "PROJECT_PERMANENTS" in worksheets_names:
+        worksheets_names.remove("PROJECT_PERMANENTS")
+        worksheets_names.insert(0, "PROJECT_PERMANENTS")
+
+    for sheet in worksheets_names:
         if not sheet.title.startswith("PROJECT_"):
             continue
         project_name = sheet.title.removeprefix("PROJECT_")
