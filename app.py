@@ -160,7 +160,17 @@ async def authenticate_user(request: Request,
 async def get_projects_assignation_data(_: Request):
     table_header_rows = None
     projects_data = {}
-    for sheet in app.runtime_data["spreadsheet"].worksheets():
+
+    worksheets = app.runtime_data["spreadsheet"].worksheets()
+    worksheets.sort(key=lambda x: x.title)
+
+    # Find the permanents project and move it at start if exists
+    perm_project = next((obj for obj in worksheets if obj.title == "PROJECT_PERMANENTS"), None)
+    if perm_project:
+        worksheets.remove(perm_project)
+        worksheets.insert(0, perm_project)
+
+    for sheet in worksheets:
         if not sheet.title.startswith("PROJECT_"):
             continue
         project_name = sheet.title.removeprefix("PROJECT_")
@@ -202,6 +212,12 @@ async def timeline(request: Request):
     return TEMPLATES.TemplateResponse("timeline.html", data)
 
 
+@app.get("/about/")
+async def timeline(request: Request):
+    data = {"app_name": APP_NAME, "request": request}
+    return TEMPLATES.TemplateResponse("about.html", data)
+
+
 @app.post("/assignation-update/")
 async def assignation_update(request: Request):
     body = await request.json()
@@ -216,6 +232,6 @@ app.add_middleware(SessionMiddleware, secret_key="StudioAssignation")
 
 
 if __name__ == "__main__":
-    config = uvicorn.Config("app:app", port=5000, reload=True, log_level="debug")
+    config = uvicorn.Config("app:app", host="0.0.0.0", port=5000, reload=True, log_level="debug")
     server = uvicorn.Server(config)
     server.run()
