@@ -161,14 +161,16 @@ async def get_projects_assignation_data(_: Request):
     table_header_rows = None
     projects_data = {}
 
-    worksheets_names = app.runtime_data["spreadsheet"].worksheets()
-    worksheets_names.sort()
+    worksheets = app.runtime_data["spreadsheet"].worksheets()
+    worksheets.sort(key=lambda x: x.title)
 
-    if "PROJECT_PERMANENTS" in worksheets_names:
-        worksheets_names.remove("PROJECT_PERMANENTS")
-        worksheets_names.insert(0, "PROJECT_PERMANENTS")
+    # Find the permanents project and move it at start if exists
+    perm_project = next((obj for obj in worksheets if obj.title == "PROJECT_PERMANENTS"), None)
+    if perm_project:
+        worksheets.remove(perm_project)
+        worksheets.insert(0, perm_project)
 
-    for sheet in worksheets_names:
+    for sheet in worksheets:
         if not sheet.title.startswith("PROJECT_"):
             continue
         project_name = sheet.title.removeprefix("PROJECT_")

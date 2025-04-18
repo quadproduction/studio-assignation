@@ -8,9 +8,10 @@
         <h1>Calendrier</h1>
         <div id="header">
             <h3 class="mt-1 text-sm font-normal text-blue-200">Gestion de l'occupation des postes du studio.</h3>
-            <div id="calendar-buttons">
-                <button title="Center sur aujourd'hui" type="button" onclick="scrollToTodayColumn()" class="cursor-pointer px-2 text-xs font-medium text-center text-black rounded-lg focus:ring-4 focus:outline-none bg-yellow-600 hover:bg-yellow-500 focus:ring-yellow-700 inline-flex items-center me-2"><svg class="w-5 h-5 text-black" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 24 24"><path d="M7.833 2c-.507 0-.98.216-1.318.576A1.92 1.92 0 0 0 6 3.89V21a1 1 0 0 0 1.625.78L12 18.28l4.375 3.5A1 1 0 0 0 18 21V3.889c0-.481-.178-.954-.515-1.313A1.808 1.808 0 0 0 16.167 2H7.833Z"/></svg></button>
-                <button type="button" onclick="updateProjectsData()" class="cursor-pointer pl-2 pr-3 text-xs font-medium text-center text-white rounded-lg focus:ring-4 focus:outline-none bg-blue-600 hover:bg-blue-500 focus:ring-blue-700 inline-flex items-center me-2"><svg class="w-5 h-5 me-2 text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.651 7.65a7.131 7.131 0 0 0-12.68 3.15M18.001 4v4h-4m-7.652 8.35a7.13 7.13 0 0 0 12.68-3.15M6 20v-4h4"/></svg>Rafraîchir</button>
+            <div id="calendar-buttons" class="!hidden">
+                <button title="Center sur aujourd'hui" type="button" onclick="scrollToTodayColumn()" class="cursor-pointer px-2 text-xs font-medium text-center text-black rounded-lg focus:ring-4 focus:outline-none bg-yellow-600 hover:bg-yellow-500 focus:ring-yellow-700 inline-flex items-center"><svg class="w-5 h-5 text-black" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 24 24"><path d="M7.833 2c-.507 0-.98.216-1.318.576A1.92 1.92 0 0 0 6 3.89V21a1 1 0 0 0 1.625.78L12 18.28l4.375 3.5A1 1 0 0 0 18 21V3.889c0-.481-.178-.954-.515-1.313A1.808 1.808 0 0 0 16.167 2H7.833Z"/></svg></button>
+                <button type="button" onclick="switchView()" class="quick-view cursor-pointer pl-2 pr-3 text-xs font-medium text-center text-white rounded-lg focus:ring-4 focus:outline-none bg-violet-500 hover:bg-violet-400 focus:ring-violet-600 inline-flex items-center"><i id="switch-view-btn-icon" class="bx me-1 text-white bx-check-circle bx-circle"></i>Vue Rapide</button>
+                <button type="button" onclick="updateProjectsData()" class="cursor-pointer pl-2 pr-3 text-xs font-medium text-center text-white rounded-lg focus:ring-4 focus:outline-none bg-blue-600 hover:bg-blue-500 focus:ring-blue-700 inline-flex items-center"><svg class="w-5 h-5 me-1 text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.651 7.65a7.131 7.131 0 0 0-12.68 3.15M18.001 4v4h-4m-7.652 8.35a7.13 7.13 0 0 0 12.68-3.15M6 20v-4h4"/></svg>Rafraîchir</button>
             </div>
         </div>
     </div>
@@ -65,6 +66,20 @@
 <script>
     const commonSelectOptions = new Set(["---", "TT", "ABS"])
 
+
+    function switchView() {
+        const table_elem = document.getElementById("table-assignation")
+        const switchViewBtnIcon = document.getElementById("switch-view-btn-icon")
+
+        switchViewBtnIcon.classList.toggle("bx-circle")
+
+        const isFullView = table_elem.classList.toggle("quick-view")
+        if (!isFullView) {
+            scrollToTodayColumn()
+        }
+    }
+
+
     function getElapsedDaysSinceStartOfYear() {
         const today = new Date()
         const diff = Date.UTC(today.getFullYear(), today.getMonth(), today.getDate())
@@ -72,10 +87,25 @@
         return diff / 86400000 // Directly in days
     }
 
+
+    function getDaysUntilNextSundayFromToday() {
+        // Next Sunday if we are Sunday
+        // The Sunday after next if we are Monday
+        const curr = new Date()
+        return (7 - (((curr.getDay() + 6) % 7) + 1)) + 7
+    }
+
+
+    function getQuickViewColLimits(today_index) {
+        return [today_index-2, today_index+getDaysUntilNextSundayFromToday()]
+    }
+
+
     function scrollToTodayColumn() {
         const todayCol = document.getElementById("today-col")
         scrollToColumn({"target": todayCol})
     }
+
 
     function scrollToColumn(e) {
         e = e || window.event
@@ -91,6 +121,7 @@
         tableWrapper.scrollTo({ left: columnPosition, behavior: "smooth" })
     }
 
+
     function parseElementID(elem_id) {
         let [project_id, coords] = elem_id.slice(2).split("_")
         project_id = atob(project_id.replaceAll("-", "="))
@@ -99,6 +130,7 @@
         col_index = parseInt(col_index)
         return [project_id, row_index, col_index]
     }
+
 
     async function assignationUpdate(e) {
         e = e || window.event
@@ -141,6 +173,7 @@
         }
     }
 
+
     function saveValue(e) {
         e = e || window.event
         let targ = e.target || e.srcElement || e
@@ -148,6 +181,7 @@
 
         targ.dataset.prevValue = targ.value
     }
+
 
     function createSelectOptionElement(option_value, is_selected, is_hidden, col_index) {
         const option_elem = document.createElement("option")
@@ -164,6 +198,8 @@
 
         return option_elem
     }
+
+
     function createSelectElement(select_id, options, opts_to_hide, selected_option, col_index) {
         const select_elem = document.createElement("select")
         select_elem.id = select_id
@@ -192,6 +228,7 @@
         return select_elem
     }
 
+
     function getSelectOptionsToHide(project_users_data, col_index, cell_value) {
         let existing_options = []
 
@@ -206,35 +243,24 @@
         return new Set(existing_options)
     }
 
-    function getColumnNotEmptyValues(table_id, column_index) {
-        const table = document.getElementById(table_id)
-        let values = []
-
-        if (!table || column_index < 0 || table.rows[0].cells.length <= column_index) {
-            return values
-        }
-
-        for (const row of table.rows) {
-            if (row.cells[column_index]) {
-                values.push(row.cells[column_index])
-            }
-        }
-
-        return values
-    }
 
     function toggleLoadingState() {
         const buttons_elem = document.getElementById("calendar-buttons")
         const wrapper_elem = document.getElementById("table-wrapper")
         const table_elem = document.getElementById("table-assignation")
         const loading_elem = document.getElementById("calendar-loading")
-        buttons_elem.classList.toggle("disabled")
+
         wrapper_elem.classList.toggle("overflow-hidden")
         table_elem.classList.toggle("placeholder")
         loading_elem.classList.toggle("!hidden")
+
+        if (!buttons_elem.classList.toggle("disabled")) {
+            buttons_elem.classList.remove("!hidden")
+        }
     }
 
-    async function updateProjectsData(scroll_to_today_col=false) {
+
+    async function updateProjectsData(init=false) {
         toggleLoadingState()
         const ws_types_response = await fetch('/workstation-types-data/')
         const ws_types_data = await ws_types_response.json()
@@ -243,7 +269,10 @@
         const assignation_data = await assignation_data_response.json()
         const { table_header_rows, projects_data } = assignation_data
 
+        // +1 to include today
         const today_num = getElapsedDaysSinceStartOfYear()+1
+        // Passing today_num+1 because we need to do +2-1 (Adding 2 static columns AND removing 1 to be 0-based)
+        const [ quickViewFirstColIndex, quickViewLastColIndex ] = getQuickViewColLimits(today_num+1)
 
         // Get table elements
         const colgroup = document.getElementById("table-assignation-colgroup")
@@ -268,6 +297,9 @@
         colgroup.appendChild(second_col)
         for (let i = 0; i < column_count-2; i++) {
             const col = document.createElement("col")
+            if (i < quickViewFirstColIndex || i > quickViewLastColIndex) {
+                col.classList.add("full-view")
+            }
             col.style.width = "56px"
             colgroup.appendChild(col)
         }
@@ -292,6 +324,9 @@
                         th.id = "today-col"
                     }
                 }
+                if (col_index > 1 && (col_index < quickViewFirstColIndex || col_index > quickViewLastColIndex)) {
+                    th.classList.add("full-view")
+                }
                 th.onclick = scrollToColumn
                 tr.appendChild(th)
             }
@@ -300,6 +335,7 @@
 
         Object.entries(projects_data).forEach(([project_name, project_users_data]) => {
             // Project name row
+            let projectFullViewOnly = true
             const project_uid = "p_" + btoa(project_name).replaceAll("=", "-")
             const project_tr = document.createElement("tr")
             project_tr.id = project_uid
@@ -312,6 +348,9 @@
                     const div = document.createElement("div")
                     div.textContent = project_title_row_data[i]
                     td.appendChild(div)
+                }
+                if (i > 1 && (i < quickViewFirstColIndex || i > quickViewLastColIndex)) {
+                    td.classList.add("full-view")
                 }
                 project_tr.appendChild(td)
             }
@@ -329,9 +368,12 @@
             tbody.appendChild(project_tr)
 
             // Project users
+            let userFullViewOnly
             for (let row_index = 0; row_index < project_users_data.length; row_index++) {
                 const tr = document.createElement("tr")
                 tr.classList.add(`child_${project_uid}`)
+
+                userFullViewOnly = true
 
                 let user_ws_type_data = null
                 for (let col_index = 0; col_index < project_users_data[row_index].length; col_index++) {
@@ -348,8 +390,13 @@
                                 div.style.color = ws_types_data[cell_value]["color"]
                                 div.style.backgroundColor = ws_types_data[cell_value]["background_color"]
                             }
+                        } else {
+                            if (cell_value.length >= 17) {
+                                div.classList.add("small")
+                            }
                         }
                     } else {
+                        // -1 because we need to do -2+1 (removing 2 columns and adding 1 to be 1-based)
                         const dayNum = col_index - 1
 
                         if ([0, 6].includes(new Date(new Date().getFullYear(), 0, dayNum).getDay())) {
@@ -378,13 +425,29 @@
                         } else {
                             div.textContent = " "
                         }
+
+                        if (col_index < quickViewFirstColIndex || col_index > quickViewLastColIndex) {
+                            td.classList.add("full-view")
+                        } else if (userFullViewOnly && col_index > today_num && cell_value) {
+                            // col_index > today_num will include today because today_num to index is today_num+1
+                            userFullViewOnly = false
+                            projectFullViewOnly = false
+                        }
                     }
 
                     td.appendChild(div)
                     tr.appendChild(td)
                 }
 
+                if (userFullViewOnly) {
+                    tr.classList.add("full-view")
+                }
+
                 tbody.appendChild(tr)
+            }
+
+            if (projectFullViewOnly) {
+                project_tr.classList.add("full-view")
             }
 
             if (project_name === "PERMANENTS") {
@@ -395,13 +458,14 @@
 
         toggleLoadingState()
 
-        if (scroll_to_today_col) {
+        if (init) {
             scrollToTodayColumn()
         }
     }
 
+
     // Fetch immediately and then every 5 minutes
-    updateProjectsData(scroll_to_today_col=true)
+    updateProjectsData(init=true)
     //setInterval(fetchProjectsData, 1 * 60 * 1000)
 </script>
 {% endblock script_area %}
