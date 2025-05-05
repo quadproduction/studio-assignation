@@ -1314,7 +1314,7 @@ main li {
   background-color: oklch(0.73 0.15 99.42);
   border-bottom: 1px solid oklch(0.58 0.12 99.48);
 }
-#table-assignation thead th:nth-child(2) > div {
+#table-assignation:not(.ws) thead th:nth-child(2) > div {
   padding-right: 3px;
 }
 #table-assignation thead th:first-of-type {
@@ -1322,12 +1322,15 @@ main li {
   left: 0;
   z-index: 12;
 }
-#table-assignation thead th:nth-child(2) {
+#table-assignation.ws thead th:first-of-type {
+  border-right: 3px solid oklch(0.69 0.08 271.83);
+}
+#table-assignation:not(.ws) thead th:nth-child(2) {
   left: 188px;
   z-index: 12;
   border-right: 3px solid oklch(0.69 0.08 271.83);
 }
-#table-assignation tbody td:nth-child(n+3) {
+#table-assignation:not(.ws) tbody td:nth-child(n+3), #table-assignation.ws tbody td:nth-child(n+2) {
   position: unset;
 }
 #table-assignation tr:not(.project-header) td {
@@ -1337,7 +1340,7 @@ main li {
   border: solid oklch(0.36 0.11 270.16);
   border-width: 0 1px 1px 0;
 }
-#table-assignation tr:not(.project-header) td:nth-child(2) > div {
+#table-assignation:not(.ws) tr:not(.project-header) td:nth-child(2) > div {
   border-width: 0 0 1px 0;
 }
 #table-assignation tr:not(.project-header) td:first-of-type {
@@ -1349,11 +1352,11 @@ main li {
 #table-assignation tr:not(.project-header) td:first-of-type > div {
   border-radius: 8px 0 0 8px;
 }
-#table-assignation tr:not(.project-header) td:nth-child(2) {
+#table-assignation:not(.ws) tr:not(.project-header) td:nth-child(2) {
   text-align: left;
   font-weight: 500;
 }
-#table-assignation:not(.placeholder) tr:not(.project-header):hover td:nth-child(2) {
+#table-assignation:not(.placeholder):not(.ws) tr:not(.project-header):hover td:nth-child(2) {
   filter: brightness(0.74);
 }
 #table-assignation tbody td {
@@ -1371,7 +1374,7 @@ main li {
   text-overflow: ellipsis;
   background-color: oklch(0.468 0.105 271.249);
 }
-#table-assignation tbody td > div[data-title]:before {
+#table-assignation tbody td[data-title]:before {
   content: attr(data-title);
   position: absolute;
   pointer-events: none;
@@ -1380,7 +1383,8 @@ main li {
   font-weight: bold;
   background-color: #f0f0ff;
   color: #111;
-  margin-top: -0.3em;
+  margin-top: -0.37em;
+  margin-left: 1.4rem;
   padding: .2em .5em;
   white-space: nowrap;
   box-shadow: rgba(0, 0, 0, 0.19) 0 10px 20px, rgba(0, 0, 0, 0.23) 0 6px 6px;
@@ -1389,19 +1393,20 @@ main li {
   z-index: 99999;
   visibility: hidden;
 }
-#table-assignation tbody td > div[data-title]:after {
+#table-assignation tbody td[data-title]:after {
   content: "";
   position: absolute;
   pointer-events: none;
   opacity: 0;
   z-index: 99999;
   visibility: hidden;
-  margin-top: 5px;
+  margin-top: -21px;
+  margin-left: 31px;
   transform: translateX(-24px);
   border: .5rem solid;
   border-color: transparent white transparent transparent;
 }
-#table-assignation tbody td > div[data-title]:hover:before, #table-assignation tbody td > div[data-title]:hover:after {
+#table-assignation tbody td[data-title]:hover:before, #table-assignation tbody td[data-title]:hover:after {
   opacity: 1;
   transition: opacity .1s ease-in-out .2s;
   visibility: visible;
@@ -1463,16 +1468,16 @@ main li {
 #table-assignation:not(.placeholder) tbody tr:hover {
   filter: brightness(1.3);
 }
-#table-assignation tbody td:nth-child(2) {
+#table-assignation:not(.ws) tbody td:nth-child(2) {
   font-size: .9em;
   left: 188px;
 }
-#table-assignation tbody td:nth-child(2) {
+#table-assignation.ws tbody td:first-of-type, #table-assignation:not(.ws) tbody td:nth-child(2) {
   border-right: 3px solid oklch(0.69 0.08 271.83);
   box-shadow: -10px 0 15px 10px rgb(29 38 75);
   clip-path: inset(0 -15px 0 0);
 }
-#table-assignation tbody td:nth-child(n+3) {
+#table-assignation:not(.ws) tbody td:nth-child(n+3), #table-assignation.ws tbody td:nth-child(n+2) {
   font-family: "Chivo Mono", monospace;
   font-optical-sizing: auto;
   font-weight: 300;

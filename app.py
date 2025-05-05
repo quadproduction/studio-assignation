@@ -59,15 +59,17 @@ def _target_allowed(target):
 @app.middleware("http")
 async def middleware(request: Request, call_next):
     if request.session.get("logged", False) or _target_allowed(request.url.path):
-        if not app.runtime_data.get("spreadsheet"):
+        if not app.runtime_data.get("spreadsheet_assignation"):
             # Path to the Google authentication file should be in the environment variables
             google_auth_file_path = os.getenv("GOOGLE_AUTH_FILE_PATH")
             # Get the Google client instance
             gclient = gspread.service_account(filename=google_auth_file_path)
             # The document key should also be in the environment variables
-            document_key = os.getenv("GOOGLE_SHEETS_DOC_KEY")
+            assign_document_key = os.getenv("GOOGLE_SHEETS_ASSIGN_DOC_KEY")
+            ws_document_key = os.getenv("GOOGLE_SHEETS_WORKSTATIONS_DOC_KEY")
             # Retrieve and save the assignation doc
-            app.runtime_data["spreadsheet"] = gclient.open_by_key(document_key)
+            app.runtime_data["spreadsheet_assignation"] = gclient.open_by_key(assign_document_key)
+            app.runtime_data["spreadsheet_ws"] = gclient.open_by_key(ws_document_key)
 
         response = await call_next(request)
         return response
@@ -169,7 +171,7 @@ async def _get_projects_assignation_data():
     table_header_rows = None
     projects_data = {}
 
-    worksheets = app.runtime_data["spreadsheet"].worksheets()
+    worksheets = app.runtime_data["spreadsheet_assignation"].worksheets()
     worksheets.sort(key=lambda x: x.title)
 
     # Find the permanents project and move it at start if exists
@@ -211,6 +213,7 @@ async def get_projects_assignation_data(force: bool = False):
         [app.runtime_data["data"]["table_header_rows"],
          app.runtime_data["data"]["projects_data"]] = await _get_projects_assignation_data()
         app.runtime_data["data"]["ws_types_data"] = await _get_workstation_types_data()
+        app.runtime_data["data"]["ws_list"] = await _get_workstation_list()
         app.runtime_data["data"]["last_retrieval_epoch"] = int(time.time())
         app.runtime_data["data"]["retrieval_in_progress"] = False
 
@@ -222,7 +225,7 @@ async def get_projects_assignation_data(force: bool = False):
 
 async def _get_workstation_types_data():
     ws_types_data = {}
-    ws_sheet = app.runtime_data["spreadsheet"].worksheet("INTERNAL_WS_DATA")
+    ws_sheet = app.runtime_data["spreadsheet_assignation"].worksheet("INTERNAL_WS_DATA")
     values = ws_sheet.get_all_values()
 
     for row in values:
@@ -247,6 +250,28 @@ async def get_workstation_types_data(_: Request):
 async def timeline(request: Request):
     data = {"app_name": APP_NAME, "request": request}
     return TEMPLATES.TemplateResponse("timeline.html", data)
+
+
+async def _get_workstation_list():
+    ws_list = {}
+    ws_sheet = app.runtime_data["spreadsheet_ws"].worksheet("MACHINES")
+    values = ws_sheet.get('F:F')
+    print(values)
+
+    for row in values:
+        if not row[0] or not row[0].strip():
+            continue
+
+        ws_list[row[0]] = True
+
+    del ws_list["ID"]
+
+    return list(ws_list.keys())
+
+
+@app.get("/workstation-list/")
+async def get_workstation_list(_: Request):
+    return JSONResponse(content=app.runtime_data["data"]["ws_list"])
 
 
 @app.get("/workstations/")
@@ -277,7 +302,7 @@ async def timeline(request: Request):
 async def assignation_update(request: Request):
     body = await request.json()
 
-    project_sheet = app.runtime_data["spreadsheet"].worksheet("PROJECT_"+body["projectID"])
+    project_sheet = app.runtime_data["spreadsheet_assignation"].worksheet("PROJECT_"+body["projectID"])
     project_sheet.update_cell(body["rowIndex"]+1, body["colIndex"]+1, body["newValue"])
 
     app.runtime_data["data"]["projects_data"][body["projectID"]]["values"][body["rowIndex"]-3][body["colIndex"]] = body["newValue"]
