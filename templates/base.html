@@ -35,7 +35,10 @@
                 <div class="hidden justify-between items-center w-full lg:flex lg:w-auto lg:order-1" id="mobile-menu-2">
                     <ul class="flex flex-col mt-4 font-medium lg:flex-row lg:space-x-8 lg:mt-0">
                         <li>
-                            <a href="/timeline/" {% if current_page == "timeline" %}class="block py-2 pr-4 pl-3 text-white rounded bg-primary-700 lg:bg-transparent lg:p-0" aria-current="page"{% else %}class="block py-2 pr-4 pl-3 text-primary-200 border-b border-gray-100 hover:bg-gray-700 hover:text-white border-gray-700 lg:hover:bg-transparent lg:border-0 lg:p-0"{% endif %}>Calendrier</a>
+                            <a href="/timeline/" {% if current_page == "timeline" %}class="block py-2 pr-4 pl-3 text-white rounded bg-primary-700 lg:bg-transparent lg:p-0" aria-current="page"{% else %}class="block py-2 pr-4 pl-3 text-primary-200 border-b border-gray-100 hover:bg-gray-700 hover:text-white border-gray-700 lg:hover:bg-transparent lg:border-0 lg:p-0"{% endif %}>Assigner</a>
+                        </li>
+                        <li>
+                            <a href="/people/" {% if current_page == "people" %}class="block py-2 pr-4 pl-3 text-white rounded bg-primary-700 lg:bg-transparent lg:p-0" aria-current="page"{% else %}class="block py-2 pr-4 pl-3 text-primary-200 border-b border-gray-100 hover:bg-gray-700 hover:text-white border-gray-700 lg:hover:bg-transparent lg:border-0 lg:p-0"{% endif %}>Booking</a>
                         </li>
                         <li>
                             <a href="/about/" {% if current_page == "about" %}class="block py-2 pr-4 pl-3 text-white rounded bg-primary-700 lg:bg-transparent lg:p-0" aria-current="page"{% else %}class="block py-2 pr-4 pl-3 text-primary-200 border-b border-gray-100 hover:bg-gray-700 hover:text-white border-gray-700 lg:hover:bg-transparent lg:border-0 lg:p-0"{% endif %}>À Propos</a>
@@ -54,7 +57,7 @@
     <div id="footer_wrapper">
         <footer class="bg-white rounded-lg shadow-sm m-4 dark:bg-gray-800 component-shadow">
             <div class="w-full mx-auto p-4 md:flex md:items-center md:justify-between">
-              <span class="text-sm text-gray-500 sm:text-center dark:text-gray-400">© 2025 <a href="https://flowbite.com/" class="hover:underline"><b>{{ app_name }}</b></a>. All Rights Reserved.</span>
+              <span class="text-sm text-gray-500 sm:text-center dark:text-gray-400">© 2025 <a href="/" class="hover:underline"><b>{{ app_name }}</b></a>. All Rights Reserved.</span>
             <ul class="flex flex-wrap items-center mt-3 text-sm font-medium text-gray-500 dark:text-gray-400 sm:mt-0">
                 <li>
                     <a href="/about/" class="hover:underline">À Propos</a>
