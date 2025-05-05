@@ -1,7 +1,9 @@
+import os
+import re
+import time
+import logging
 from pathlib import Path
 from typing_extensions import Annotated
-import logging
-import os
 
 import uvicorn
 
@@ -26,7 +28,14 @@ BASE_PATH = Path(__file__).resolve().parent
 TEMPLATES = Jinja2Templates(directory=str(BASE_PATH / "templates"))
 app = FastAPI(title="Studio Assignation")
 app.mount("/static", StaticFiles(directory="static"), name="static")
-app.runtime_data = {}
+app.runtime_data = {
+    "data": {
+        "retrieval_in_progress": False,
+        "last_retrieval_epoch": 0,
+        "projects_data": None,
+        "ws_types_data": None
+    }
+}
 
 
 def _is_debug():
@@ -49,17 +58,17 @@ def _target_allowed(target):
 
 @app.middleware("http")
 async def middleware(request: Request, call_next):
-    if not app.runtime_data.get("spreadsheet"):
-        # Path to the Google authentication file should be in the environment variables
-        google_auth_file_path = os.getenv("GOOGLE_AUTH_FILE_PATH")
-        # Get the Google client instance
-        gclient = gspread.service_account(filename=google_auth_file_path)
-        # The document key should also be in the environment variables
-        document_key = os.getenv("GOOGLE_SHEETS_DOC_KEY")
-        # Retrieve and save the assignation doc
-        app.runtime_data["spreadsheet"] = gclient.open_by_key(document_key)
-
     if request.session.get("logged", False) or _target_allowed(request.url.path):
+        if not app.runtime_data.get("spreadsheet"):
+            # Path to the Google authentication file should be in the environment variables
+            google_auth_file_path = os.getenv("GOOGLE_AUTH_FILE_PATH")
+            # Get the Google client instance
+            gclient = gspread.service_account(filename=google_auth_file_path)
+            # The document key should also be in the environment variables
+            document_key = os.getenv("GOOGLE_SHEETS_DOC_KEY")
+            # Retrieve and save the assignation doc
+            app.runtime_data["spreadsheet"] = gclient.open_by_key(document_key)
+
         response = await call_next(request)
         return response
 
@@ -156,8 +165,7 @@ async def authenticate_user(request: Request,
     return responses.RedirectResponse("/timeline/", status_code=status.HTTP_302_FOUND)
 
 
-@app.get("/projects-assignation-data/")
-async def get_projects_assignation_data(_: Request):
+async def _get_projects_assignation_data():
     table_header_rows = None
     projects_data = {}
 
@@ -176,19 +184,43 @@ async def get_projects_assignation_data(_: Request):
         project_name = sheet.title.removeprefix("PROJECT_")
         values = sheet.get_all_values()
 
+        project_color_code = values[0][0].strip()
+        if not project_color_code or not re.fullmatch(r"^#[A-Za-z0-9]{6}$", project_color_code):
+            project_color_code = "#FF0000"
+
+        values[0][0] = ""
+
         if not table_header_rows:
             table_header_rows = values[:3]
 
-        projects_data[project_name] = values[3:]
+        projects_data[project_name] = {
+            "color_code": project_color_code,
+            "values": values[3:]
+        }
+
+    return [table_header_rows, projects_data]
+
+
+@app.get("/projects-assignation-data/")
+async def get_projects_assignation_data(force: bool = False):
+    while app.runtime_data["data"]["retrieval_in_progress"]:
+        time.sleep(2)
+
+    if force or (int(time.time()) - app.runtime_data["data"]["last_retrieval_epoch"]) >= 300:
+        app.runtime_data["data"]["retrieval_in_progress"] = True
+        [app.runtime_data["data"]["table_header_rows"],
+         app.runtime_data["data"]["projects_data"]] = await _get_projects_assignation_data()
+        app.runtime_data["data"]["ws_types_data"] = await _get_workstation_types_data()
+        app.runtime_data["data"]["last_retrieval_epoch"] = int(time.time())
+        app.runtime_data["data"]["retrieval_in_progress"] = False
 
     return JSONResponse(content={
-        "table_header_rows": table_header_rows,
-        "projects_data": projects_data
+        "table_header_rows": app.runtime_data["data"]["table_header_rows"],
+        "projects_data": app.runtime_data["data"]["projects_data"]
     })
 
 
-@app.get("/workstation-types-data/")
-async def get_workstation_types_data(_: Request):
+async def _get_workstation_types_data():
     ws_types_data = {}
     ws_sheet = app.runtime_data["spreadsheet"].worksheet("INTERNAL_WS_DATA")
     values = ws_sheet.get_all_values()
@@ -203,13 +235,36 @@ async def get_workstation_types_data(_: Request):
             "pool": [x for x in row[3:] if x]
         }
 
-    return JSONResponse(content=ws_types_data)
+    return ws_types_data
+
+
+@app.get("/workstation-types-data/")
+async def get_workstation_types_data(_: Request):
+    return JSONResponse(content=app.runtime_data["data"]["ws_types_data"])
 
 
 @app.get("/timeline/")
 async def timeline(request: Request):
     data = {"app_name": APP_NAME, "request": request}
     return TEMPLATES.TemplateResponse("timeline.html", data)
+
+
+@app.get("/workstations/")
+async def people(request: Request):
+    data = {"app_name": APP_NAME, "request": request}
+    return TEMPLATES.TemplateResponse("workstations.html", data)
+
+
+@app.get("/people/")
+async def people(request: Request):
+    data = {"app_name": APP_NAME, "request": request}
+    return TEMPLATES.TemplateResponse("people.html", data)
+
+
+@app.get("/blueprint/")
+async def people(request: Request):
+    data = {"app_name": APP_NAME, "request": request}
+    return TEMPLATES.TemplateResponse("blueprint.html", data)
 
 
 @app.get("/about/")
@@ -224,6 +279,8 @@ async def assignation_update(request: Request):
 
     project_sheet = app.runtime_data["spreadsheet"].worksheet("PROJECT_"+body["projectID"])
     project_sheet.update_cell(body["rowIndex"]+1, body["colIndex"]+1, body["newValue"])
+
+    app.runtime_data["data"]["projects_data"][body["projectID"]]["values"][body["rowIndex"]-3][body["colIndex"]] = body["newValue"]
 
     return JSONResponse(content={"status": "ok"})
 
