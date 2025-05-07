@@ -256,7 +256,6 @@ async def _get_workstation_list():
     ws_list = {}
     ws_sheet = app.runtime_data["spreadsheet_ws"].worksheet("MACHINES")
     values = ws_sheet.get('F:F')
-    print(values)
 
     for row in values:
         if not row[0] or not row[0].strip():

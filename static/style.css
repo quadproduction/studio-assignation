@@ -1266,6 +1266,7 @@ main li {
   table-layout: fixed;
   border-collapse: separate;
   border-spacing: 0;
+  overflow-x: clip;
 }
 #table-assignation tr {
   height: 1.625rem;
@@ -1374,7 +1375,7 @@ main li {
   text-overflow: ellipsis;
   background-color: oklch(0.468 0.105 271.249);
 }
-#table-assignation tbody td[data-title]:before {
+#table-assignation thead th[data-title]:before, #table-assignation tbody td[data-title]:before {
   content: attr(data-title);
   position: absolute;
   pointer-events: none;
@@ -1386,14 +1387,23 @@ main li {
   margin-top: -0.37em;
   margin-left: 1.4rem;
   padding: .2em .5em;
-  white-space: nowrap;
+  white-space: pre;
   box-shadow: rgba(0, 0, 0, 0.19) 0 10px 20px, rgba(0, 0, 0, 0.23) 0 6px 6px;
   border-radius: .5em;
   border: 2px solid white;
   z-index: 99999;
   visibility: hidden;
 }
-#table-assignation tbody td[data-title]:after {
+#table-assignation thead th[data-title]:before {
+  margin: 0;
+  line-height: 1.5em;
+  text-align: right;
+  transform: translateX(-26px) translateY(60%);
+}
+#table-assignation thead th[data-title].right-align-tooltip:before, #table-assignation thead th[data-title]:nth-last-child(-n+4):before {
+  transform: translateX(calc(-100% + 26px)) translateY(60%);
+}
+#table-assignation thead th[data-title]:after, #table-assignation tbody td[data-title]:after {
   content: "";
   position: absolute;
   pointer-events: none;
@@ -1406,7 +1416,12 @@ main li {
   border: .5rem solid;
   border-color: transparent white transparent transparent;
 }
-#table-assignation tbody td[data-title]:hover:before, #table-assignation tbody td[data-title]:hover:after {
+#table-assignation thead th[data-title]:after {
+  margin-top: -15px;
+  margin-left: 15px;
+  border-color: transparent transparent white transparent;
+}
+#table-assignation thead th[data-title]:hover:before, #table-assignation thead th[data-title]:hover:after, #table-assignation tbody td[data-title]:hover:before, #table-assignation tbody td[data-title]:hover:after {
   opacity: 1;
   transition: opacity .1s ease-in-out .2s;
   visibility: visible;
@@ -1448,22 +1463,46 @@ main li {
   border-width: 0 2px 1px 2px;
   border-color: transparent oklch(0.81 0.16 99.58) oklch(0.66 0.13 99.61) oklch(0.81 0.16 99.58);
 }
-#table-assignation tr:not(.project-header) td.today-light > div {
+#table-assignation thead th.today-light > div, #table-assignation tr:not(.project-header) td.today-light > div {
   border-style: solid;
-  border-width: 0 2px 1px 2px;
-  border-color: transparent oklch(0.81 0.16 99.58) oklch(0.36 0.11 270.16) oklch(0.81 0.16 99.58);
+  border-width: 0 2px 1px 2px !important;
+  border-color: transparent oklch(0.81 0.16 99.58) oklch(0.36 0.11 270.16) oklch(0.81 0.16 99.58) !important;
 }
-#table-assignation td.unassigned > div {
+#table-assignation thead th.today-light > div {
+  border-width: 0 2px !important;
+}
+#table-assignation thead th > div.bad, #table-assignation thead th > div.med, #table-assignation thead th > div.good {
+  border: solid oklch(0.36 0.11 270.16);
+  border-width: 0 1px 0 0;
+}
+#table-assignation thead th:hover > div.bad, #table-assignation thead th:hover > div.med, #table-assignation thead th:hover > div.good {
+  filter: brightness(1.3);
+}
+#table-assignation thead th > div.bad, #table-assignation td.unassigned > div {
   color: white !important;
   background-color: oklch(0.54 0.18 25.49) !important;
 }
-#table-assignation td.assigned > div {
+#table-assignation thead th > div.bad {
+  background-image: repeating-conic-gradient(oklch(0.57 0.19 26.01) 0% 25%, oklch(0.54 0.18 25.49) 0% 50%);
+  background-position: 0 0, 8px 8px;
+  background-size: 14px 14px;
+}
+#table-assignation thead th > div.med, #table-assignation td.duplicate > div {
+  color: white !important;
+  background-color: oklch(0.631 0.146 51.112) !important;
+}
+#table-assignation thead th > div.med {
+  background-image: repeating-linear-gradient(45deg, oklch(0.66 0.15 51.9) 0, oklch(0.66 0.15 51.9) 5.5px, transparent 0, transparent 50%);
+  background-size: 14px 14px;
+}
+#table-assignation thead th > div.good, #table-assignation td.assigned > div {
   color: white !important;
   background-color: oklch(0.56 0.14 133.32) !important;
 }
-#table-assignation td.duplicate > div {
-  color: white !important;
-  background-color: darkorange !important;
+#table-assignation thead th > div.good {
+  background-image: radial-gradient(oklch(0.58 0.15 133.61) 3.8px, transparent 3.8px), radial-gradient(oklch(0.58 0.15 133.61) 3.8px, transparent 3.8px);
+  background-size: 18.6px 17px;
+  background-position: 0 0, 8px 8px;
 }
 #table-assignation:not(.placeholder) tbody tr:hover {
   filter: brightness(1.3);
