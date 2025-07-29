@@ -1,0 +1,292 @@
+{% block content %}
+
+<div class="modal-overlay" id="modalOverlay">
+    <div class="modal">
+        <button class="close-button" id="closeModal">&times;</button>
+        <div class="modal-header">
+            <h2 class="modal-title">Assignation multiple</h2>
+            <hr/>
+        </div>
+        <div id="multiple-assignation-content">
+            <div id="assignation-dates" class="text-center flex gap-1 my-2"></div>
+            <div id="assignation-users" class="text-center flex gap-1 my-2"></div>
+            <div class="">
+                <span class="pr-4">Machine :</span>
+                <select id="assignation-select"></select>
+            </div>
+        </div>
+        <div class="flex gap-2 justify-end">
+            <button type="button" id="cancelButton" class="text-white bg-gray-800 hover:bg-gray-900 focus:outline-none focus:ring-4 focus:ring-gray-300 font-medium rounded-full text-sm px-5 py-2.5 dark:bg-gray-800 dark:hover:bg-gray-700 dark:focus:ring-gray-700 dark:border-gray-700">Annuler</button>
+            <button type="button" id="confirmButton" class="text-white bg-green-700 hover:bg-green-800 focus:outline-none focus:ring-4 focus:ring-green-300 font-medium rounded-full text-sm px-5 py-2.5 text-center dark:bg-green-600 dark:hover:bg-green-700 dark:focus:ring-green-800">Confirmer</button>
+        </div>
+    </div>
+</div>
+
+{% endblock content %}
+
+{% block script_area %}
+<script>
+    const openModalBtn = document.getElementById('openModal');
+    const modalOverlay = document.getElementById('modalOverlay');
+    const closeModalBtn = document.getElementById('closeModal');
+    const cancelBtn = document.getElementById('cancelButton');
+    const confirmBtn = document.getElementById('confirmButton');
+    const messageDiv = document.getElementById('message');
+    const datesDiv = document.getElementById("assignation-dates")
+    const usersDiv = document.getElementById("assignation-users")
+    const assignationSelectDiv = document.getElementById("assignation-select")
+
+    const el = (sel, par) => (par || document).querySelector(sel);
+    const els = (sel, par) => (par || document).querySelectorAll(sel);
+    const elNew = (tag, prop) => Object.assign(document.createElement(tag), prop);
+
+    function closeModal() {
+        modalOverlay.classList.add('hide');
+        setTimeout(() => {
+    
+            modalOverlay.classList.remove('show', 'hide');
+            document.body.style.overflow = 'auto';
+            datesDiv.innerHTML = "";
+            usersDiv.innerHTML = "";
+            assignationSelectDiv.innerHTML = "";
+            removeSelectedAttribute();
+
+        }, 300);
+    }
+
+    closeModalBtn.addEventListener('click', closeModal);
+    cancelBtn.addEventListener('click', () => { closeModal(); });
+    confirmBtn.addEventListener('click', () => {
+        closeModal();
+        updateOptionsFromModal();
+        
+    });
+
+    function updateOptionsFromModal(){
+        assignationValue = assignationSelectDiv.value
+        els(".is-selected").forEach(elt => {
+            const eltSelect = elt.children[0];
+            eltSelect.value = assignationValue;
+            removeSelectedAttribute();
+            eltSelect.dispatchEvent(new Event("change"));
+
+        })
+    }
+
+    modalOverlay.addEventListener('click', (e) => {
+        if (e.target === modalOverlay) {
+            closeModal();
+        }
+    });
+
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && modalOverlay.classList.contains('show')) {
+            closeModal();
+        }
+    });
+
+    function removeSelectedAttribute(){
+        els(".is-selected").forEach(elt => {
+            elt.classList.toggle("is-selected", false);
+            elt.setAttribute('style', '')
+        });
+    }
+
+    const collides = (a, b) => 
+        a.x < b.x + b.width &&
+        a.x + a.width > b.x &&
+        a.y < b.y + b.height &&
+        a.y + a.height > b.y;
+
+    const checkElementsCollision = (x, y, width, height) => {
+        els(".selectable").forEach(elBox => {
+            const isColliding = collides({x, y, width, height}, elBox.getBoundingClientRect());
+            elBox.parentElement.classList.toggle("is-selected", isColliding);
+            elBox.parentElement.setAttribute('style', isColliding ? 'background-color: gold !important;': '')
+        });
+    };
+
+
+    const toolLasso = {
+        onDown({clientX, clientY}) {
+            
+            this.startX = clientX;
+            this.startY = clientY;
+            this.el = elNew("div", {className: "lasso"});
+            
+            this.onMove = this.onMove.bind(this);  
+            this.onUp = this.onUp.bind(this);  
+            addEventListener("pointermove", this.onMove);
+            addEventListener("pointerup", this.onUp);
+
+            Object.assign(this.el.style, {
+                position: `fixed`,
+                outline: `2px dashed blue`,
+                zIndex: `99999`,
+                pointerEvents: `none`,
+                userSelect: `none`,
+            });
+            el("body").append(this.el);
+        },
+        onMove({clientX, clientY}) {
+            this.currX = clientX;
+            this.currY = clientY;
+            const x = Math.min(this.startX, this.currX);
+            const y = Math.min(this.startY, this.currY);
+            const w = Math.abs(this.startX - this.currX);
+            const h = Math.abs(this.startY - this.currY);
+            Object.assign(this.el.style, {
+                left: `${x}px`,
+                top: `${y}px`,
+                width: `${w}px`,
+                height: `${h}px`,
+            });
+   
+            checkElementsCollision(x, y, w, h);
+
+        },
+        onUp() {
+
+            function groupByOptions(usersOptions) {
+                const groups = [];
+                const treatedUsers = new Set();
+                for (const [user, options] of Object.entries(usersOptions)) {
+                    if (treatedUsers.has(user)) continue;
+
+                    const usersWithIdenticalOptions = [user];
+                    treatedUsers.add(user);
+
+                    for (const [otherUser, otherOptions] of Object.entries(usersOptions)) {
+                        if (treatedUsers.has(otherUser)) continue;
+
+                        if (optionsAreIdentical(options, otherOptions)) {
+                            usersWithIdenticalOptions.push(otherUser);
+                            treatedUsers.add(otherUser);
+                        }
+                    };
+                    
+                    groups.push({
+                        users: usersWithIdenticalOptions,
+                        options: options,
+                    });
+                };
+                
+                return groups;
+            }
+
+            function optionsAreIdentical(options1, options2) {
+                if (options1.length !== options2.length) return false;
+
+                const sorted1 = [...options1].sort();
+                const sorted2 = [...options2].sort();
+
+                return sorted1.every((option, index) => option === sorted2[index]);
+            }
+
+            function extractDatasFromDivs(divs) {
+                var usersOptions = {};
+                var usersColors = {};
+                var dates = [];
+                var treatedDates = new Set();
+                divs.forEach(div => {
+                    var userName = div.getAttribute('data-user-name');
+                    if (!(userName in usersOptions)) {
+                        usersOptions[userName] = Array.from(div.children[0].options).map(option => option.text);
+                    }
+
+                    var backgroundColor = div.getAttribute('data-background-color');
+                    if (backgroundColor) {
+                        usersColors[userName] = backgroundColor;
+                    }
+
+                    var date = div.getAttribute('data-date');
+                    if (!treatedDates.has(date)) {
+                        dates.push(new Date(date));
+                        treatedDates.add(date);
+                    }
+                });
+
+                return [
+                    usersOptions,
+                    usersColors,
+                    dates.sort(function (a, b) {
+                        return b.date - a.date;
+                    }),
+                ];
+            }
+
+            removeEventListener("pointermove", this.onMove);
+            removeEventListener("pointerup", this.onUp);
+            this.el.remove();
+
+            const selectedElements = els(".is-selected");
+
+            if (selectedElements.length < 1){ 
+                removeSelectedAttribute();
+                return;
+             }
+
+            [usersOptions, usersColors, dates] = extractDatasFromDivs(selectedElements);
+            var groupedUsers = groupByOptions(usersOptions);
+
+            if (groupedUsers.length > 1) {
+                new Toast("Impossible de générer les assignations de plusieurs utilisateurs avec des postes différents.", Toast.TYPE_ERROR, Toast.TIME_NORMAL);
+                removeSelectedAttribute();
+                return;
+            }
+            
+            const datesDaysNames = ['Lun.', 'Mar.', 'Mer.', 'Jeu.', 'Ven.', 'Sam.', 'Dim.']
+            const datesMonthsNames = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre']
+            
+            dates.forEach(date => {
+                var dateContainer = document.createElement('div')
+                
+                dateContainer.setAttribute("class", "shadow-md rounded-lg text-xs w-16 p-1 text-blue-100 border-1 border-gray-700")
+                dateContainer.setAttribute("style", `background-color: oklch(0.425 0.104 ${(360/12)*date.getMonth()})`)
+                dateContainer.innerHTML = `
+                    <div class="text-xs italic small-padding-y">${datesMonthsNames[date.getMonth()]}</div>
+                    <div class="uppercase font-semibold border-top-bottom small-padding-y">${datesDaysNames[date.getDay()]}</div>
+                    <div class="font-bold small-padding-y">${date.getDate()}</div>
+                `
+                datesDiv.append(dateContainer)
+            });
+
+
+            groupedUsers.forEach(userGroup => {
+                userNames = userGroup['users']
+                options = userGroup['options']
+
+                userNames.forEach(userName => {
+                    var backgroundColor = usersColors[userName]
+                    if (!(backgroundColor)){ backgroundColor = "oklch(0.5979 0.0803 161.24)"; }
+                    var userContainer = document.createElement('div')
+                    userContainer.setAttribute("class", "shadow-md rounded-lg text-xs p-1 text-black-900 border-1 border-gray-700")
+                    userContainer.setAttribute("style", `background-color: ${backgroundColor}`)
+                    userContainer.innerHTML = `<div class="flex p-1">${userName}</div>`
+                    usersDiv.append(userContainer)
+
+                })
+
+                options.forEach(option => {
+
+                    optionDiv = createSelectOptionElement(option, false, false, 0);
+                    assignationSelectDiv.append(optionDiv)
+
+                });
+
+            })
+            
+            modalOverlay.classList.add('show');
+            modalOverlay.classList.remove('hide');
+            document.body.style.overflow = 'hidden';
+            
+        }
+    };
+
+
+    addEventListener("pointerdown", (evt) => {
+        if (evt.ctrlKey) toolLasso.onDown(evt);
+    });
+
+</script>
+{% endblock script_area %}

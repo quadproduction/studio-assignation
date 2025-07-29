@@ -3,6 +3,7 @@
 {% extends "base.html" %}
 
 {% block content %}
+
 <div id="calendar" class="sm:rounded-lg component-shadow">
     <div id="heading" class="bg-gray-800 px-6 py-4 h-fit">
         <h1>Assignation</h1>
@@ -14,7 +15,10 @@
                 <button type="button" onclick="updateProjectsData(init=false, force=true)" class="cursor-pointer pl-2 pr-3 text-xs font-medium text-center text-white rounded-lg focus:ring-4 focus:outline-none bg-blue-600 hover:bg-blue-500 focus:ring-blue-700 inline-flex items-center"><svg class="w-5 h-5 me-1 text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.651 7.65a7.131 7.131 0 0 0-12.68 3.15M18.001 4v4h-4m-7.652 8.35a7.13 7.13 0 0 0 12.68-3.15M6 20v-4h4"/></svg>Rafraîchir</button>
             </div>
         </div>
-    </div>
+    </div>    
+
+    {% include "modal_assignation.html" %}
+
     <div id="table-wrapper" class="relative h-fit overflow-auto">
         <table id="table-assignation" class="w-full text-sm text-left text-blue-200">
             <colgroup id="table-assignation-colgroup">
@@ -66,7 +70,6 @@
 {% block script_area %}
 <script>
     const commonSelectOptions = new Set(["---", "TT", "ABS"])
-
 
     function switchView() {
         const table_elem = document.getElementById("table-assignation")
@@ -204,7 +207,7 @@
     function createSelectElement(select_id, options, opts_to_hide, selected_option, col_index) {
         const select_elem = document.createElement("select")
         select_elem.id = select_id
-        select_elem.classList.add("w-full", "border-0", "appearance-none", "focus:outline-none", "focus:ring-0", "focus:border-gray-200", "peer")
+        select_elem.classList.add("selectable", "w-full", "border-0", "appearance-none", "focus:outline-none", "focus:ring-0", "focus:border-gray-200", "peer")
         let index = 0
         for (const option_value of options) {
             if (!options.includes(selected_option) && index === 1) {
@@ -394,6 +397,7 @@
                 userFullViewOnly = true
 
                 let user_ws_type_data = null
+                var backgroundColor = null;
                 for (let col_index = 0; col_index < project_users_data[row_index].length; col_index++) {
 
                     const cell_value = project_users_data[row_index][col_index].trim()
@@ -407,6 +411,7 @@
                                 user_ws_type_data = ws_types_data[cell_value]
                                 div.style.color = ws_types_data[cell_value]["color"]
                                 div.style.backgroundColor = ws_types_data[cell_value]["background_color"]
+                                backgroundColor = ws_types_data[cell_value]["background_color"];
                             }
                         } else {
                             if (cell_value.length >= 17) {
@@ -416,8 +421,8 @@
                     } else {
                         // -1 because we need to do -2+1 (removing 2 columns and adding 1 to be 1-based)
                         const dayNum = col_index - 1
-
-                        if ([0, 6].includes(new Date(new Date().getFullYear(), 0, dayNum).getDay())) {
+                        var date = new Date(new Date().getFullYear(), 0, dayNum)
+                        if ([0, 6].includes(date.getDay())) {
                             td.classList.add("weekend")
                         }
                         if (today_num > dayNum) {
@@ -447,6 +452,12 @@
                             }
                         } else {
                             div.textContent = " "
+                        }
+
+                        div.setAttribute('data-user-name', project_users_data[row_index][0]);
+                        div.setAttribute('data-date', date);
+                        if (backgroundColor){
+                            div.setAttribute('data-background-color', backgroundColor);
                         }
 
                         if (col_index < quickViewFirstColIndex || col_index > quickViewLastColIndex) {
